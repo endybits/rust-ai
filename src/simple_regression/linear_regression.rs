@@ -78,7 +78,7 @@ pub fn run() {
     let mut model = LinearRegresion::new();
 
     // 3. Configure hyperparameters
-    let epochs = 1000;
+    let epochs = 10000;
     let learning_rate = 0.00001;
 
     println!("Iniciando entrenamiento...");
