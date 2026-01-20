@@ -30,7 +30,7 @@ fn generate_mock_records(count: usize) -> Vec<RawRecord> {
 
 pub fn get_training_data() -> Dataset {
     // Simulamos la carga de datos
-    let raw_data = generate_mock_records(10);
+    let raw_data = generate_mock_records(100000000);
 
     // ETL: Extraer las características y etiquetas
     let x_train: Vec<f64> = raw_data.iter().map(|record| record.area).collect();
