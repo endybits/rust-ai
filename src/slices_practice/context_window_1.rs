@@ -13,4 +13,8 @@ pub fn context_window() {
     // Len: 3
 
     println!("Mirando tokens {:?}", view);
+
+    // Ahora los 3 primeros
+    let first_3: &[u32] = &ctx_window[0..3];
+    println!("\n\nPrimeros tres elementos: {:?}", first_3);
 }
