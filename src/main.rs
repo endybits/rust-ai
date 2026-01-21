@@ -8,7 +8,9 @@ mod slices_practice;
 // }
 
 use crate::slices_practice::context_window_1::context_window;
+use crate::slices_practice::flat_tensors_2::flat_tensors;
 
 fn main() {
     context_window();
+    flat_tensors();
 }
