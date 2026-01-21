@@ -1,3 +1,5 @@
+use core::f64;
+
 use crate::simple_regression::data::get_training_data;
 
 // This struct is our neuron
@@ -58,7 +60,7 @@ impl LinearRegresion {
 
             // Print the progres each 100 epoch
             if epoch % 100 == 0 {
-                println!("Epoch {}: Error MSE = {:.2} | w = {:.4}, b = {:.4}",
+                println!("Epoch {}: Error MSE = {:.4} | w = {:.4}, b = {:.4}",
                     epoch, total_error / n, self.w, self.b)
             }
 
@@ -70,28 +72,54 @@ impl LinearRegresion {
 
 // Helper function
 pub fn run() {
-    // 1. Retrieve data
+    // 1. Cargar datos
     let data = get_training_data();
-    println!("Datos cargados: {} registros", data.x_train.len());
+    
+    // --- PASO A: Normalizar X (Área) ---
+    let x_min = data.x_train.iter().fold(f64::INFINITY, |a, &b| a.min(b));
+    let x_max = data.x_train.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b));
+    
+    let x_norm: Vec<f64> = data.x_train.iter()
+        .map(|x| (x - x_min) / (x_max - x_min))
+        .collect();
 
-    // 2. Initialize model
+    // --- PASO B: Normalizar Y (Precio) ---
+    // Esto es clave para que el modelo converja rápido
+    let y_min = data.y_train.iter().fold(f64::INFINITY, |a, &b| a.min(b));
+    let y_max = data.y_train.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b));
+
+    let y_norm: Vec<f64> = data.y_train.iter()
+        .map(|y| (y - y_min) / (y_max - y_min))
+        .collect();
+        
+    println!("Escalas -> Área: {}-{} | Precio: {}-{}", x_min, x_max, y_min, y_max);
+
+    // 2. Inicializar modelo
     let mut model = LinearRegresion::new();
 
-    // 3. Configure hyperparameters
-    let epochs = 10000;
-    let learning_rate = 0.00001;
+    // 3. Entrenamiento
+    // Como todo es 0-1, un LR de 0.1 es perfecto y rápido.
+    let epochs = 2000; 
+    let learning_rate = 0.1; 
 
-    println!("Iniciando entrenamiento...");
-    model.train(&data.x_train, &data.y_train, epochs, learning_rate);
+    println!("Iniciando entrenamiento blindado...");
+    // Entrenamos con AMBOS vectores normalizados
+    model.train(&x_norm, &y_norm, epochs, learning_rate);
 
-
-    // 4. Probar con una casa nueva
-    let test_area = 100.0;
-    let predicted_price = model.predict(test_area);
+    // 4. Predicción Correcta (Pipeline de Inferencia)
+    let test_area_real = 100.0;
+    
+    // a) Normalizamos el input (Llevamos 100 al mundo 0-1)
+    let test_area_norm = (test_area_real - x_min) / (x_max - x_min);
+    
+    // b) El modelo predice en "idioma normalizado" (0-1)
+    let predicted_norm = model.predict(test_area_norm);
+    
+    // c) Des-normalizamos el output (Llevamos el resultado al mundo real de Millones)
+    let predicted_price = predicted_norm * (y_max - y_min) + y_min;
 
     println!("--------------------------------");
     println!("RESULTADO FINAL:");
-    println!("Modelo aprendido: Precio = ({:.2} * Area) + {:.2}", model.w, model.b);
-    println!("Predicción para casa de 100m2: {:.2} Millones", predicted_price);
-    println!("(Esperábamos ~450-500 millones según nuestra fórmula secreta)");
+    println!("Modelo interno (w, b): {:.4}, {:.4}", model.w, model.b);
+    println!("Predicción para 100m2: {:.2} Millones", predicted_price);
 }
